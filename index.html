@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Glitch Sample Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="device-container">
+        <!-- ディスプレイ部 -->
+        <div class="display-panel">
+            <canvas id="waveform"></canvas>
+            <div class="status-bar" id="status-text">READY</div>
+        </div>
+
+        <!-- コントロール部 -->
+        <div class="controls-panel">
+            <div class="knobs-row">
+                <div class="knob-container">
+                    <div class="knob" id="knob-dist" data-val="10">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <label>DIST</label>
+                </div>
+                <div class="knob-container">
+                    <div class="knob" id="knob-pitch" data-val="50">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <label>PITCH</label>
+                </div>
+                <div class="knob-container">
+                    <div class="knob" id="knob-eq-low" data-val="50">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <label>EQ LOW</label>
+                </div>
+                <div class="knob-container">
+                    <div class="knob" id="knob-eq-high" data-val="50">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <label>EQ HIGH</label>
+                </div>
+            </div>
+
+            <div class="knobs-row">
+                <div class="knob-container">
+                    <div class="knob" id="knob-reverb" data-val="10">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <label>REVERB</label>
+                </div>
+                <div class="knob-container">
+                    <div class="knob" id="knob-bpm" data-val="41">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <label id="label-bpm">BPM: 135</label>
+                </div>
+                <div class="knob-container">
+                    <div class="knob" id="knob-lofi" data-val="40">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <label>REST</label>
+                </div>
+                <div class="knob-container">
+                    <div class="knob" id="knob-vol" data-val="60">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <label>VOLUME</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- アクション部 -->
+        <div class="actions-panel">
+            <button id="btn-record" class="btn btn-red">REC</button>
+            <button id="btn-play" class="btn btn-green" disabled>PLAY</button>
+            <button id="btn-save" class="btn btn-blue" disabled>SAVE WAV</button>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>
