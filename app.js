@@ -141,7 +141,8 @@ function generateGlitchDecisions() {
         glitchDecisions.push({
             jump: Math.random(),
             offset: Math.random(),
-            rest: Math.random()
+            rest: Math.random(),
+            restLen: Math.random()
         });
     }
 }
@@ -410,6 +411,7 @@ function startGlitchLoop() {
     const duration = recordedBuffer.duration;
     currentOffset = selectionStart * duration;
     let chunkIndex = 0;
+    let lastOffset = -1;
 
     const schedule = () => {
         if (!isPlaying) return;
@@ -431,13 +433,14 @@ function startGlitchLoop() {
 
         const restProb = knobVals['knob-lofi'] / 100;
         const decision = glitchDecisions[chunkIndex % glitchDecisions.length];
+        const now = ctx.currentTime;
+        let waitTime = chunkLen;
 
         if (decision.rest > restProb) {
             const src = ctx.createBufferSource(); src.buffer = recordedBuffer;
             src.playbackRate.value = pRate;
             const envGain = ctx.createGain();
             envGain.connect(eqLow);
-            const now = ctx.currentTime;
             envGain.gain.setValueAtTime(0, now);
             envGain.gain.linearRampToValueAtTime(1, now + 0.005);
             envGain.gain.setValueAtTime(1, now + 0.005);
@@ -450,14 +453,31 @@ function startGlitchLoop() {
             } else {
                 currentOffset = start + ((currentOffset - start + bufChunkLen) % range);
             }
+            lastOffset = currentOffset;
             chunkStartTime = now;
             src.start(now, currentOffset, Math.min(bufChunkLen, end - currentOffset));
         } else {
-            currentOffset = start + ((currentOffset - start + bufChunkLen) % range);
-            chunkStartTime = ctx.currentTime;
+            const maxRest = Math.floor(restProb * 8) + 1;
+            const restChunks = Math.floor(decision.restLen * maxRest) + 1;
+            waitTime = chunkLen * restChunks;
+
+            if (decision.jump < 0.5 && lastOffset !== -1) {
+                const src = ctx.createBufferSource(); src.buffer = recordedBuffer;
+                src.playbackRate.value = pRate;
+                const envGain = ctx.createGain();
+                envGain.connect(eqLow);
+                envGain.gain.setValueAtTime(0, now);
+                envGain.gain.linearRampToValueAtTime(1, now + 0.01);
+                envGain.gain.exponentialRampToValueAtTime(0.001, now + waitTime);
+                src.connect(envGain);
+                src.start(now, lastOffset, Math.min(bufChunkLen * restChunks, end - lastOffset));
+            }
+
+            currentOffset = start + ((currentOffset - start + bufChunkLen * restChunks) % range);
+            chunkStartTime = now;
         }
         chunkIndex++;
-        glitchTimeoutId = setTimeout(schedule, chunkLen * 1000);
+        glitchTimeoutId = setTimeout(schedule, waitTime * 1000);
     };
     schedule();
 }
@@ -529,7 +549,7 @@ btnSave.addEventListener('click', async () => {
         const start = selectionStart * recordedBuffer.duration;
         const end = selectionEnd * recordedBuffer.duration;
         const range = Math.max(0.01, end - start);
-        let offset = start, t = 0, cIdx = 0;
+        let offset = start, t = 0, cIdx = 0, lOffset = -1;
         while (t < renderDuration) {
             const restProb = knobVals['knob-lofi'] / 100;
             const decision = glitchDecisions[cIdx % glitchDecisions.length];
@@ -550,11 +570,27 @@ btnSave.addEventListener('click', async () => {
                 } else {
                     offset = start + ((offset - start + bufChunkLen) % range);
                 }
+                lOffset = offset;
                 sn.start(t, offset, Math.min(bufChunkLen, end - offset));
+                t += chunkLen;
             } else {
-                offset = start + ((offset - start + bufChunkLen) % range);
+                const maxRest = Math.floor(restProb * 8) + 1;
+                const restChunks = Math.floor(decision.restLen * maxRest) + 1;
+                const wait = chunkLen * restChunks;
+                if (decision.jump < 0.5 && lOffset !== -1) {
+                    const sn = oCtx.createBufferSource(); sn.buffer = recordedBuffer;
+                    sn.playbackRate.value = pRate;
+                    const envGain = oCtx.createGain();
+                    envGain.connect(oEqLow);
+                    envGain.gain.setValueAtTime(0, t);
+                    envGain.gain.linearRampToValueAtTime(1, t + 0.01);
+                    envGain.gain.exponentialRampToValueAtTime(0.001, t + wait);
+                    sn.connect(envGain);
+                    sn.start(t, lOffset, Math.min(bufChunkLen * restChunks, end - lOffset));
+                }
+                offset = start + ((offset - start + bufChunkLen * restChunks) % range);
+                t += wait;
             }
-            t += chunkLen;
             cIdx++;
         }
     }
