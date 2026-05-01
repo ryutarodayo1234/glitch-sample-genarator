@@ -1,3 +1,3 @@
-# glitch-sample-genarator
+# Glitch Sample Genarator
 
 Created by Gemini
